@@ -1,6 +1,0 @@
-package gocbrf
-
-func main(){
-	
-	
-}
