@@ -7,10 +7,12 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/olekukonko/tablewriter"
 	"golang.org/x/net/html/charset"
 )
 
@@ -80,7 +82,7 @@ func getInfo()(map[string]string){
 	return valuteMap
 }
 
-func getInfoFor90Day(str string, currentTime time.Time, previousTime time.Time){
+func getInfoFor90Day(str string, currentTime time.Time, previousTime time.Time, name string)([]string){
 	url := fmt.Sprintf("http://www.cbr.ru/scripts/XML_dynamic.asp?date_req1=%02d/%02d/%d&date_req2=%02d/%02d/%d&VAL_NM_RQ=%s", previousTime.Day(), previousTime.Month(), previousTime.Year(), currentTime.Day(), currentTime.Month(), currentTime.Year(), str)
 	client := &http.Client{}
 	//log.Println(url)
@@ -134,8 +136,10 @@ func getInfoFor90Day(str string, currentTime time.Time, previousTime time.Time){
 		average_value+=current
 	}
 	average_value/=float64(len(valCurs.Record))
-	log.Print("min: ",min," date min: ", date_min," max: ", max," date max ", date_max," average value: ", average_value,"\n")
-
+	average_value_cropped:=fmt.Sprintf("%.2f",average_value)
+	//log.Print("min: ",min," date min: ", date_min," max: ", max," date max ", date_max," average value: ", average_value_cropped,"\n")
+	output_string := []string{name, strconv.FormatFloat(min, 'f', -2, 64), date_min, strconv.FormatFloat(max, 'f', -2, 64), date_max, average_value_cropped}
+	return output_string
 }
 
 func main() {
@@ -144,10 +148,20 @@ func main() {
 	previousTime := currentTime.AddDate(0, 0, -90)
 	log.Printf("Текущая дата: %02d-%02d-%d\n", currentTime.Day(), currentTime.Month(), currentTime.Year())
 	//log.Printf("Дата 90 дней назад: %02d-%02d-%d\n", previousTime.Day(), previousTime.Month(), previousTime.Year())
+	log.Println("Курс валют за последнии 90 дней")
 	var valuteMap map[string]string = getInfo()
 	//log.Println("first_stage_end")
+	mass := make([][]string, len(valuteMap))
+	i:=0
 	for name, ID := range valuteMap{
-		fmt.Printf("%s ", name)
-		getInfoFor90Day(ID, currentTime, previousTime)
+		//fmt.Printf("%s ", name)
+		mass[i]=getInfoFor90Day(ID, currentTime, previousTime, name)
+		i++
 	}
+	table := tablewriter.NewWriter(os.Stdout)
+	table.SetHeader([]string{"Name", "min", "date min", "max", "date max", "average cost"})
+	for _, row := range mass {
+		table.Append(row)
+	}
+	table.Render()
 }
