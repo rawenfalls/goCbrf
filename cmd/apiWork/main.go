@@ -14,8 +14,11 @@ import (
 
 // ValCurs структура для разбора XML-ответа
 type ValCurs struct {
-	XMLName xml.Name `xml:"ValCurs"`
+	XMLName 		xml.Name `xml:"ValCurs"`
+	Date			string `xml:"Date,attr"`
+	Name			string `xml:"name,attr"`
 	Valute []struct{
+		ID			string `xml:"ID,attr"`
 		NumCode		string `xml:"NumCode"`
 		CharCode	string `xml:"CharCode"`
 		Nominal		string `xml:"Nominal"`
@@ -33,6 +36,8 @@ type ValCurs struct {
 // }
 
 func main() {
+	log.SetFlags(0)
+
 	client := &http.Client{}
 
 	req, err := http.NewRequest("GET", "http://www.cbr.ru/scripts/XML_daily.asp", nil)
@@ -62,7 +67,7 @@ func main() {
 		return
 	}
 	for _, valute := range valCurs.Valute{
-		log.Println(valute.NumCode, valute.CharCode, valute.Nominal, valute.Name, valute.Value, valute.VunitRate)
+		log.Println(valCurs.Date, valute.ID, valute.NumCode, valute.CharCode, valute.Nominal, valute.Name, valute.Value, valute.VunitRate)
 	}
 
 	// // Выведите информацию о курсах валют
