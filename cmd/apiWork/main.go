@@ -1,12 +1,15 @@
 package main
 
 import (
+	"bytes"
 	"encoding/xml"
 	//"fmt"
 	"io"
 	"log"
 	"net/http"
+
 	//"os"
+	"golang.org/x/net/html/charset"
 )
 
 // ValCurs структура для разбора XML-ответа
@@ -16,7 +19,7 @@ type ValCurs struct {
 		NumCode		string `xml:"NumCode"`
 		CharCode	string `xml:"CharCode"`
 		Nominal		string `xml:"Nominal"`
-		Name		[]rune `xml:"Name"`
+		Name		string `xml:"Name"`
 		Value		string `xml:"Value"`
 		VunitRate	string `xml:"VunitRate"`
 	} `xml:"Valute"`
@@ -51,7 +54,9 @@ func main() {
 	//log.Println(string(body))
 	// Разбор XML-ответа
 	valCurs := new(ValCurs)
-	err = xml.Unmarshal([]byte(body), valCurs)
+	decoder := xml.NewDecoder(bytes.NewReader(body))
+	decoder.CharsetReader = charset.NewReaderLabel
+	err = decoder.Decode(&valCurs)
 	if err != nil {
 		log.Println("Ошибка при разборе XML:", err)
 		return
